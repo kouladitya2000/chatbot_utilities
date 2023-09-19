@@ -1,8 +1,37 @@
 from azure.storage.blob import BlobServiceClient
 import os
+import requests, uuid, json
 
 
 def download_blob(sturl,stkey,cname,blobname,path):
+    '''
+       About:
+       ---------
+       Download a file from Blob Storage in Azure
+        Return the difference in days between the current date and game release date.
+
+        Parameter
+        ---------
+        sturl : str
+            Release date in string format.
+        stkey : str
+            Key of the Storage account. HIGHLY Restricted
+        cname : str
+            Container name of the Storage account
+        blobname : str
+            Blob name to download
+        path : str
+            Path from which file to download
+        
+
+        Returns
+        -------
+        string
+            Successful download of Blob or error it caused
+
+    
+    '''
+
     STORAGEACCOUNTURL = sturl
     STORAGEACCOUNTKEY = stkey
     CONTAINERNAME = cname
@@ -29,6 +58,33 @@ def download_blob(sturl,stkey,cname,blobname,path):
 
 
 def upload_blob(sturl,stkey,cname,blobname,path):
+    '''
+       About:
+       ---------
+       Upload a file to Blob Storage in Azure
+        Return the difference in days between the current date and game release date.
+
+        Parameter
+        ---------
+        sturl : str
+            Release date in string format.
+        stkey : str
+            Key of the Storage account. HIGHLY Restricted
+        cname : str
+            Container name of the Storage account
+        blobname : str
+            Blob name to upload
+        path : str
+            Path from which file to upload
+        
+
+        Returns
+        -------
+        string
+            Successful upload of Blob or error it caused
+
+    
+    '''
     STORAGEACCOUNTURL = sturl
     STORAGEACCOUNTKEY = stkey
     CONTAINERNAME = cname
@@ -46,4 +102,58 @@ def upload_blob(sturl,stkey,cname,blobname,path):
         blob_client_instance.upload_blob(data, overwrite=True)
 
     return (f"File '{path_blob}' uploaded to '{CONTAINERNAME}/{BLOBNAME}'")
+
+
+def tanslator(key,endpoint,location,path,text_content):
+    '''
+       About:
+       ---------
+       Translates a text with the help of Azure Translator.
+
+        Parameter
+        ---------
+        key : str
+            key to Azure Translator.HIGHLY Restricted
+        endpoint : str
+            Endpoint of  Azure Translator. 
+        location : str
+            Location of Translator.
+        path : str
+            Path to define what is needed to be done.like translate and all etc.
+        text_content : str
+            Text to be converted from Azure Translator
+
+        Returns
+        -------
+        string
+            Successful upload of Blob or error it caused
+    
+    '''
+    constructed_url = endpoint + path
+
+    params = {
+        'api-version': '3.0',
+        'from': 'hi',
+        'to': ['fr', 'en']
+    }
+
+    headers = {
+        'Ocp-Apim-Subscription-Key': key,
+        # location required if you're using a multi-service or regional (not global) resource.
+        'Ocp-Apim-Subscription-Region': location,
+        'Content-type': 'application/json',
+        'X-ClientTraceId': str(uuid.uuid4())
+    }
+
+    body = [{
+        'text': text_content
+    }]
+
+    request = requests.post(constructed_url, params=params, headers=headers, json=body)
+    response = request.json()
+
+    # Extract the translated text from the response
+    return response[0]['translations'][1]['text']
+
+
 
