@@ -1,6 +1,7 @@
 from azure.storage.blob import BlobServiceClient
 import os
 import requests, uuid, json
+import azure.cognitiveservices.speech as speechsdk
 
 
 def download_blob(sturl,stkey,cname,blobname,path):
@@ -27,7 +28,6 @@ def download_blob(sturl,stkey,cname,blobname,path):
         Returns
         -------
         string
-            Successful download of Blob or error it caused
 
     
     '''
@@ -81,7 +81,6 @@ def upload_blob(sturl,stkey,cname,blobname,path):
         Returns
         -------
         string
-            Successful upload of Blob or error it caused
 
     
     '''
@@ -126,7 +125,6 @@ def tanslator(key,endpoint,location,path,text_content):
         Returns
         -------
         string
-            Successful upload of Blob or error it caused
     
     '''
     constructed_url = endpoint + path
@@ -155,5 +153,46 @@ def tanslator(key,endpoint,location,path,text_content):
     # Extract the translated text from the response
     return response[0]['translations'][1]['text']
 
+def speech_to_text(path,speech_subscription,speech_region):
+    '''
+       About:
+       ---------
+       Translates a text with the help of Azure Translator.
+
+        Parameter
+        ---------
+        speech_subscription : str
+            key to Azure Speech.HIGHLY Restricted
+        speech_region : str
+            Location of Translator.
+        path : str
+            Path to define what is needed to be done.like translate and all etc.
+
+        Returns
+        -------
+        string
+    
+    '''
+    # This example requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
+    speech_config = speechsdk.SpeechConfig(subscription=speech_subscription, region=speech_region)
+    speech_config.speech_recognition_language="en-US"
+
+    #audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
+    audio_config = speechsdk.audio.AudioConfig(filename=path)
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+
+    print("Converting the Speech.")
+    speech_recognition_result = speech_recognizer.recognize_once_async().get()
+
+    if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
+        return "{}".format(speech_recognition_result.text)
+    elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
+        return "No speech could be recognized: {}".format(speech_recognition_result.no_match_details)
+    elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
+        cancellation_details = speech_recognition_result.cancellation_details
+        print("Speech Recognition canceled: {}".format(cancellation_details.reason))
+        if cancellation_details.reason == speechsdk.CancellationReason.Error:
+            print("Did you set the speech resource key and region values?")
+            return("Error details: {}".format(cancellation_details.error_details))
 
 
